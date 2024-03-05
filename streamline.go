@@ -1,6 +1,7 @@
 package streamline
 
 import (
+	"context"
 	"errors"
 	"reflect"
 
@@ -13,10 +14,10 @@ type EventHandler = rebound.EventHandler
 
 type Streamline struct {
 	rb              *rebound.Rebound
-	eventsProcessor EventsProcessor
+	eventsProcessor EventStream
 }
 
-func NewStreamline(rb *rebound.Rebound, eventsProcessor EventsProcessor) (*Streamline, error) {
+func NewStreamline(rb *rebound.Rebound, eventsProcessor EventStream) (*Streamline, error) {
 	if rb == nil {
 		return nil, errors.New("streamline: nil rb")
 	}
@@ -46,12 +47,12 @@ func (stln *Streamline) React(fn EventHandler) {
 	stln.rb.ReactTo(eventName, fn)
 }
 
-func (stln *Streamline) ProcessEvents(events []Event) error {
+func (stln *Streamline) ProcessEvents(ctx context.Context, events []Event) error {
 	// Options:
 	// 1. Publish to a message service
 	// 2. Process in-memory
 	// 3. Persist to a database (outbox table)
-	return stln.eventsProcessor.ProcessEvents(events)
+	return stln.eventsProcessor.PublishEvents(ctx, events)
 }
 
 // Deprecated: use rebound.Rebound instance directly

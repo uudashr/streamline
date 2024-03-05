@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-type EventsProcessor interface {
-	ProcessEvents([]Event) error
+type EventStream interface {
+	PublishEvents(context.Context, []Event) error
 	StreamTo(context.Context, Dispatcher) error
 }
 

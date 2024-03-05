@@ -12,12 +12,12 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-type NatsEventsProcessor struct {
+type NatsEventStream struct {
 	nc            *nats.Conn
 	subjectPrefix string
 }
 
-func NewNatsEventsProcessor(nc *nats.Conn, subjectPrefix string) (*NatsEventsProcessor, error) {
+func NewNatsEventStream(nc *nats.Conn, subjectPrefix string) (*NatsEventStream, error) {
 	if nc == nil {
 		return nil, errors.New("streamline: nil nc")
 	}
@@ -26,13 +26,13 @@ func NewNatsEventsProcessor(nc *nats.Conn, subjectPrefix string) (*NatsEventsPro
 		return nil, errors.New("streamline: empty subject prefix")
 	}
 
-	return &NatsEventsProcessor{
+	return &NatsEventStream{
 		nc:            nc,
 		subjectPrefix: subjectPrefix,
 	}, nil
 }
 
-func (ep *NatsEventsProcessor) ProcessEvents(events []Event) error {
+func (ep *NatsEventStream) PublishEvents(ctx context.Context, events []Event) error {
 	js, err := ep.nc.JetStream(nats.PublishAsyncMaxPending(100))
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (ep *NatsEventsProcessor) ProcessEvents(events []Event) error {
 	return nil
 }
 
-func (ep *NatsEventsProcessor) StreamTo(ctx context.Context, d Dispatcher) error {
+func (ep *NatsEventStream) StreamTo(ctx context.Context, d Dispatcher) error {
 	js, err := ep.nc.JetStream()
 	if err != nil {
 		return nil
