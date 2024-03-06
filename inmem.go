@@ -22,24 +22,22 @@ func NewInMemoryEventsProcessor() *InMemoryEventsProcessor {
 	}
 }
 
-func (ep *InMemoryEventsProcessor) ProcessEvents(events []Event) error {
-	for _, event := range events {
-		eventType := reflect.TypeOf(event)
-		eventName, ok := TagValue(eventType)
-		if !ok {
-			return errors.New("streamline: missing streamline tag")
-		}
+func (ep *InMemoryEventsProcessor) Publish(event Event) error {
+	eventType := reflect.TypeOf(event)
+	eventName, ok := TagValue(eventType)
+	if !ok {
+		return errors.New("streamline: missing streamline tag")
+	}
 
-		// TODO: doesn't have to be json
-		payload, err := json.Marshal(event)
-		if err != nil {
-			panic(err)
-		}
+	// TODO: doesn't have to be json
+	payload, err := json.Marshal(event)
+	if err != nil {
+		panic(err)
+	}
 
-		ep.events <- eventRecord{
-			name:    eventName,
-			payload: payload,
-		}
+	ep.events <- eventRecord{
+		name:    eventName,
+		payload: payload,
 	}
 	return nil
 }

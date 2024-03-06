@@ -5,7 +5,7 @@ import (
 )
 
 type EventStream interface {
-	PublishEvents(context.Context, []Event) error
+	Publish(context.Context, Event) error
 	StreamTo(context.Context, Dispatcher) error
 }
 

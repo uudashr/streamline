@@ -13,22 +13,22 @@ type Event = eventually.Event
 type EventHandler = rebound.EventHandler
 
 type Streamline struct {
-	rb              *rebound.Rebound
-	eventsProcessor EventStream
+	rb     *rebound.Rebound
+	stream EventStream
 }
 
-func NewStreamline(rb *rebound.Rebound, eventsProcessor EventStream) (*Streamline, error) {
+func NewStreamline(rb *rebound.Rebound, stream EventStream) (*Streamline, error) {
 	if rb == nil {
 		return nil, errors.New("streamline: nil rb")
 	}
 
-	if eventsProcessor == nil {
-		return nil, errors.New("streamline: nil eventsProcessor")
+	if stream == nil {
+		return nil, errors.New("streamline: nil stream")
 	}
 
 	return &Streamline{
-		rb:              rb,
-		eventsProcessor: eventsProcessor,
+		rb:     rb,
+		stream: stream,
 	}, nil
 }
 
@@ -47,15 +47,10 @@ func (stln *Streamline) React(fn EventHandler) {
 	stln.rb.ReactTo(eventName, fn)
 }
 
-func (stln *Streamline) ProcessEvents(ctx context.Context, events []Event) error {
+func (stln *Streamline) Publish(ctx context.Context, event Event) error {
 	// Options:
 	// 1. Publish to a message service
 	// 2. Process in-memory
 	// 3. Persist to a database (outbox table)
-	return stln.eventsProcessor.PublishEvents(ctx, events)
-}
-
-// Deprecated: use rebound.Rebound instance directly
-func (stln *Streamline) Dispatch(eventName string, payload []byte) error {
-	return stln.rb.Dispatch(eventName, payload)
+	return stln.stream.Publish(ctx, event)
 }

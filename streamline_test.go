@@ -4,19 +4,17 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/uudashr/eventually"
 	"github.com/uudashr/rebound"
 	"github.com/uudashr/streamline"
 )
 
 func ExampleStreamline() {
 	var (
-		x eventually.Event
-		d rebound.Decoder
+		rb     *rebound.Rebound
+		stream streamline.EventStream
 	)
-	_, _ = x, d
 
-	stln := &streamline.Streamline{}
+	stln, _ := streamline.NewStreamline(rb, stream)
 
 	type OrderCompleted struct {
 		OrderID string `streamline:"order.completed"` // defines the event name also the field is marked as object/aggregate id
@@ -27,7 +25,7 @@ func ExampleStreamline() {
 		return nil
 	})
 
-	stln.Dispatch("order.completed", []byte(`{"order_id":"123"}`))
+	rb.Dispatch("order.completed", []byte(`{"order_id":"123"}`))
 }
 
 func TestReflect(t *testing.T) {

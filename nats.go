@@ -13,13 +13,13 @@ import (
 )
 
 type NatsEventStream struct {
-	nc            *nats.Conn
+	js            nats.JetStream
 	subjectPrefix string
 }
 
-func NewNatsEventStream(nc *nats.Conn, subjectPrefix string) (*NatsEventStream, error) {
-	if nc == nil {
-		return nil, errors.New("streamline: nil nc")
+func NewNatsEventStream(js nats.JetStream, subjectPrefix string) (*NatsEventStream, error) {
+	if js == nil {
+		return nil, errors.New("streamline: nil js")
 	}
 
 	if subjectPrefix == "" {
@@ -27,63 +27,50 @@ func NewNatsEventStream(nc *nats.Conn, subjectPrefix string) (*NatsEventStream, 
 	}
 
 	return &NatsEventStream{
-		nc:            nc,
+		js:            js,
 		subjectPrefix: subjectPrefix,
 	}, nil
 }
 
-func (ep *NatsEventStream) PublishEvents(ctx context.Context, events []Event) error {
-	js, err := ep.nc.JetStream(nats.PublishAsyncMaxPending(100))
+func (ep *NatsEventStream) Publish(ctx context.Context, event Event) error {
+	eventType := reflect.TypeOf(event)
+	eventName, ok := TagValue(eventType)
+	if !ok {
+		return errors.New("streamline: missing streamline tag")
+	}
+
+	objectID, ok := TagFieldValue(event)
+	if !ok {
+		return errors.New("streamline: missing object id")
+	}
+
+	if objectID == "" {
+		return errors.New("streamline: empty object id")
+	}
+
+	subject, err := natsSubject(ep.subjectPrefix, eventName, objectID)
 	if err != nil {
 		return err
 	}
 
-	for _, event := range events {
-		eventType := reflect.TypeOf(event)
+	// TODO: doesn't have to be json
+	payload, err := json.Marshal(event)
+	if err != nil {
+		panic(err)
+	}
 
-		eventName, ok := TagValue(eventType)
-		if !ok {
-			return errors.New("streamline: missing streamline tag")
-		}
-
-		objectID, ok := TagFieldValue(event)
-		if !ok {
-			return errors.New("streamline: missing object id")
-		}
-
-		if objectID == "" {
-			return errors.New("streamline: empty object id")
-		}
-
-		subject, err := natsSubject(ep.subjectPrefix, eventName, objectID)
-		if err != nil {
-			return err
-		}
-
-		// TODO: doesn't have to be json
-		payload, err := json.Marshal(event)
-		if err != nil {
-			panic(err)
-		}
-
-		log.Printf("Publishing to %s: %s\n", subject, payload)
-		_, err = js.Publish(subject, payload)
-		if err != nil {
-			return err
-		}
+	log.Printf("Publishing to %s: %s\n", subject, payload)
+	_, err = ep.js.Publish(subject, payload)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (ep *NatsEventStream) StreamTo(ctx context.Context, d Dispatcher) error {
-	js, err := ep.nc.JetStream()
-	if err != nil {
-		return nil
-	}
-
 	msgCh := make(chan *nats.Msg, 100)
-	_, err = js.ChanQueueSubscribe(ep.subjectPrefix+".>", "streamline", msgCh, nats.AckExplicit())
+	_, err := ep.js.ChanQueueSubscribe(ep.subjectPrefix+".>", "streamline", msgCh, nats.AckExplicit())
 	if err != nil {
 		return err
 	}
