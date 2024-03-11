@@ -22,7 +22,7 @@ func NewInMemoryEventsProcessor() *InMemoryEventsProcessor {
 	}
 }
 
-func (ep *InMemoryEventsProcessor) Publish(event Event) error {
+func (ep *InMemoryEventsProcessor) Publish(ctx context.Context, event Event) error {
 	eventType := reflect.TypeOf(event)
 	eventName, ok := TagValue(eventType)
 	if !ok {
@@ -42,13 +42,13 @@ func (ep *InMemoryEventsProcessor) Publish(event Event) error {
 	return nil
 }
 
-func (ep *InMemoryEventsProcessor) StreamTo(ctx context.Context, d Dispatcher) error {
+func (ep *InMemoryEventsProcessor) StreamTo(ctx context.Context, recv Receiver) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case event := <-ep.events:
-			if err := d.Dispatch(event.name, event.payload); err != nil {
+			if err := recv.Receive(event.name, event.payload); err != nil {
 				return err
 			}
 		}
