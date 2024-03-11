@@ -68,7 +68,7 @@ func (ep *NatsEventStream) Publish(ctx context.Context, event Event) error {
 	return nil
 }
 
-func (ep *NatsEventStream) StreamTo(ctx context.Context, d Dispatcher) error {
+func (ep *NatsEventStream) StreamTo(ctx context.Context, recv Receiver) error {
 	msgCh := make(chan *nats.Msg, 100)
 	_, err := ep.js.ChanQueueSubscribe(ep.subjectPrefix+".>", "streamline", msgCh, nats.AckExplicit())
 	if err != nil {
@@ -85,7 +85,7 @@ func (ep *NatsEventStream) StreamTo(ctx context.Context, d Dispatcher) error {
 				return err
 			}
 
-			err = d.Dispatch(eventName, msg.Data)
+			err = recv.Receive(eventName, msg.Data)
 			if err != nil {
 				return err
 			}

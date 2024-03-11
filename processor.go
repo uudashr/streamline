@@ -6,9 +6,15 @@ import (
 
 type EventStream interface {
 	Publish(context.Context, Event) error
-	StreamTo(context.Context, Dispatcher) error
+	StreamTo(context.Context, Receiver) error
 }
 
-type Dispatcher interface {
-	Dispatch(eventName string, payload []byte) error
+type Receiver interface {
+	Receive(eventName string, payload []byte) error
+}
+
+type ReceiverFunc func(eventName string, payload []byte) error
+
+func (fn ReceiverFunc) Receive(eventName string, payload []byte) error {
+	return fn(eventName, payload)
 }
