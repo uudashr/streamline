@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 
 	"github.com/uudashr/eventually"
 	"github.com/uudashr/rebound"
@@ -53,4 +54,28 @@ func (stln *Streamline) Publish(ctx context.Context, event Event) error {
 	// 2. Process in-memory
 	// 3. Persist to a database (outbox table)
 	return stln.stream.Publish(ctx, event)
+}
+
+type Meta struct {
+	ObjectName string
+	ObjectID   string
+	EventName  string
+}
+
+func MetaOf(event Event) (Meta, error) {
+	tag, val, ok := Tag(event)
+	if !ok {
+		return Meta{}, errors.New("streamline: no tag found")
+	}
+
+	vals := strings.Split(tag, ".")
+	if len(vals) != 2 {
+		return Meta{}, errors.New("streamline: invalid tag")
+	}
+
+	return Meta{
+		ObjectName: vals[0],
+		ObjectID:   val,
+		EventName:  vals[1],
+	}, nil
 }
