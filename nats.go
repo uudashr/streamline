@@ -11,6 +11,8 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
+const defaultQueueGroupName = "streamline"
+
 type NatsEventStream struct {
 	js            nats.JetStream
 	subjectPrefix string
@@ -74,6 +76,11 @@ func (es *NatsEventStream) Publish(ctx context.Context, event Event) error {
 }
 
 func (es *NatsEventStream) StreamTo(ctx context.Context, recv Receiver) error {
+	queueGroupName := defaultQueueGroupName
+	if es.opts.queueGroupName != "" {
+		queueGroupName = es.opts.queueGroupName
+	}
+
 	subOpts := []nats.SubOpt{nats.AckExplicit()}
 	if es.opts.durableName != "" {
 		subOpts = append(subOpts, nats.Durable(es.opts.durableName))
@@ -81,7 +88,7 @@ func (es *NatsEventStream) StreamTo(ctx context.Context, recv Receiver) error {
 
 	msgCh := make(chan *nats.Msg, 100)
 	_, err := es.js.ChanQueueSubscribe(
-		es.subjectPrefix+".>", "streamline",
+		es.subjectPrefix+".>", queueGroupName,
 		msgCh,
 		subOpts...)
 	if err != nil {
@@ -141,7 +148,8 @@ func eventNameFromSubject(prefix, subject string) (string, error) {
 }
 
 type streamOpts struct {
-	durableName string
+	queueGroupName string
+	durableName    string
 }
 type StreamOpt interface {
 	configureStream(*streamOpts)
@@ -151,6 +159,12 @@ type streamOptFunc func(*streamOpts)
 
 func (f streamOptFunc) configureStream(opts *streamOpts) {
 	f(opts)
+}
+
+func QueueGroup(name string) StreamOpt {
+	return streamOptFunc(func(opts *streamOpts) {
+		opts.queueGroupName = name
+	})
 }
 
 func Durable(name string) StreamOpt {
