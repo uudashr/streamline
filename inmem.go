@@ -12,17 +12,17 @@ type eventRecord struct {
 	payload []byte
 }
 
-type InMemoryEventsProcessor struct {
+type InMemoryEventStream struct {
 	events chan eventRecord
 }
 
-func NewInMemoryEventsProcessor() *InMemoryEventsProcessor {
-	return &InMemoryEventsProcessor{
+func NewInMemoryEventStream() *InMemoryEventStream {
+	return &InMemoryEventStream{
 		events: make(chan eventRecord, 100),
 	}
 }
 
-func (ep *InMemoryEventsProcessor) Publish(ctx context.Context, event Event) error {
+func (es *InMemoryEventStream) Publish(ctx context.Context, event Event) error {
 	eventType := reflect.TypeOf(event)
 	eventName, ok := TagValue(eventType)
 	if !ok {
@@ -35,19 +35,19 @@ func (ep *InMemoryEventsProcessor) Publish(ctx context.Context, event Event) err
 		panic(err)
 	}
 
-	ep.events <- eventRecord{
+	es.events <- eventRecord{
 		name:    eventName,
 		payload: payload,
 	}
 	return nil
 }
 
-func (ep *InMemoryEventsProcessor) StreamTo(ctx context.Context, recv Receiver) error {
+func (es *InMemoryEventStream) StreamTo(ctx context.Context, recv Receiver) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case event := <-ep.events:
+		case event := <-es.events:
 			if err := recv.Receive(event.name, event.payload); err != nil {
 				return err
 			}
