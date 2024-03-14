@@ -14,9 +14,10 @@ import (
 type NatsEventStream struct {
 	js            nats.JetStream
 	subjectPrefix string
+	opts          *streamOpts
 }
 
-func NewNatsEventStream(js nats.JetStream, subjectPrefix string) (*NatsEventStream, error) {
+func NewNatsEventStream(js nats.JetStream, subjectPrefix string, opts ...StreamOpt) (*NatsEventStream, error) {
 	if js == nil {
 		return nil, errors.New("streamline: nil js")
 	}
@@ -25,9 +26,15 @@ func NewNatsEventStream(js nats.JetStream, subjectPrefix string) (*NatsEventStre
 		return nil, errors.New("streamline: empty subject prefix")
 	}
 
+	strmOpts := &streamOpts{}
+	for _, opt := range opts {
+		opt.configureStream(strmOpts)
+	}
+
 	return &NatsEventStream{
 		js:            js,
 		subjectPrefix: subjectPrefix,
+		opts:          strmOpts,
 	}, nil
 }
 
@@ -67,8 +74,16 @@ func (es *NatsEventStream) Publish(ctx context.Context, event Event) error {
 }
 
 func (es *NatsEventStream) StreamTo(ctx context.Context, recv Receiver) error {
+	subOpts := []nats.SubOpt{nats.AckExplicit()}
+	if es.opts.durableName != "" {
+		subOpts = append(subOpts, nats.Durable(es.opts.durableName))
+	}
+
 	msgCh := make(chan *nats.Msg, 100)
-	_, err := es.js.ChanQueueSubscribe(es.subjectPrefix+".>", "streamline", msgCh, nats.AckExplicit())
+	_, err := es.js.ChanQueueSubscribe(
+		es.subjectPrefix+".>", "streamline",
+		msgCh,
+		subOpts...)
 	if err != nil {
 		return err
 	}
@@ -123,4 +138,23 @@ func eventNameFromSubject(prefix, subject string) (string, error) {
 
 	// format: <aggregate-name>.<event-name>
 	return segments[0] + "." + segments[2], nil
+}
+
+type streamOpts struct {
+	durableName string
+}
+type StreamOpt interface {
+	configureStream(*streamOpts)
+}
+
+type streamOptFunc func(*streamOpts)
+
+func (f streamOptFunc) configureStream(opts *streamOpts) {
+	f(opts)
+}
+
+func Durable(name string) StreamOpt {
+	return streamOptFunc(func(opts *streamOpts) {
+		opts.durableName = name
+	})
 }
