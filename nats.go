@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 
@@ -32,7 +31,7 @@ func NewNatsEventStream(js nats.JetStream, subjectPrefix string) (*NatsEventStre
 	}, nil
 }
 
-func (ep *NatsEventStream) Publish(ctx context.Context, event Event) error {
+func (es *NatsEventStream) Publish(ctx context.Context, event Event) error {
 	eventType := reflect.TypeOf(event)
 	eventName, ok := TagValue(eventType)
 	if !ok {
@@ -48,7 +47,7 @@ func (ep *NatsEventStream) Publish(ctx context.Context, event Event) error {
 		return errors.New("streamline: empty object id")
 	}
 
-	subject, err := natsSubject(ep.subjectPrefix, eventName, objectID)
+	subject, err := natsSubject(es.subjectPrefix, eventName, objectID)
 	if err != nil {
 		return err
 	}
@@ -59,8 +58,7 @@ func (ep *NatsEventStream) Publish(ctx context.Context, event Event) error {
 		panic(err)
 	}
 
-	log.Printf("Publishing to %s: %s\n", subject, payload)
-	_, err = ep.js.Publish(subject, payload)
+	_, err = es.js.Publish(subject, payload)
 	if err != nil {
 		return err
 	}
@@ -68,9 +66,9 @@ func (ep *NatsEventStream) Publish(ctx context.Context, event Event) error {
 	return nil
 }
 
-func (ep *NatsEventStream) StreamTo(ctx context.Context, recv Receiver) error {
+func (es *NatsEventStream) StreamTo(ctx context.Context, recv Receiver) error {
 	msgCh := make(chan *nats.Msg, 100)
-	_, err := ep.js.ChanQueueSubscribe(ep.subjectPrefix+".>", "streamline", msgCh, nats.AckExplicit())
+	_, err := es.js.ChanQueueSubscribe(es.subjectPrefix+".>", "streamline", msgCh, nats.AckExplicit())
 	if err != nil {
 		return err
 	}
@@ -80,7 +78,7 @@ func (ep *NatsEventStream) StreamTo(ctx context.Context, recv Receiver) error {
 		case <-ctx.Done():
 			return nil
 		case msg := <-msgCh:
-			eventName, err := eventNameFromSubject(ep.subjectPrefix, msg.Subject)
+			eventName, err := eventNameFromSubject(es.subjectPrefix, msg.Subject)
 			if err != nil {
 				return err
 			}
