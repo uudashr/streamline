@@ -48,12 +48,31 @@ func (stln *Streamline) React(fn EventHandler) {
 	stln.rb.ReactTo(eventName, fn)
 }
 
+func (stln *Streamline) StreamAndReact(ctx context.Context) error {
+	return stln.stream.StreamTo(ctx, ReceiverFunc(stln.rb.Dispatch))
+}
+
 func (stln *Streamline) Publish(ctx context.Context, event Event) error {
 	// Options:
 	// 1. Publish to a message service
 	// 2. Process in-memory
 	// 3. Persist to a database (outbox table)
 	return stln.stream.Publish(ctx, event)
+}
+
+type EventStream interface {
+	Publish(context.Context, Event) error
+	StreamTo(context.Context, Receiver) error
+}
+
+type Receiver interface {
+	Receive(eventName string, payload []byte) error
+}
+
+type ReceiverFunc func(eventName string, payload []byte) error
+
+func (fn ReceiverFunc) Receive(eventName string, payload []byte) error {
+	return fn(eventName, payload)
 }
 
 type Meta struct {
