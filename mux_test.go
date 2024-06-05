@@ -1,31 +1,27 @@
 package streamline_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
-	"github.com/uudashr/rebound"
 	"github.com/uudashr/streamline"
 )
 
-func ExampleStreamline() {
-	var (
-		rb     *rebound.Rebound
-		stream streamline.EventStream
-	)
-
-	stln, _ := streamline.NewStreamline(rb, stream)
-
+func ExampleMux() {
+	mux := streamline.NewMux()
 	type OrderCompleted struct {
-		OrderID string `streamline:"order.completed"` // defines the event name also the field is marked as object/aggregate id
+		OrderID string `json:"orderId" streamline:"order.completed"` // defines the event name also the field is marked as object/aggregate id
 	}
 
 	// It will react to the OrderCompleted event. This can be taken from the messaging service.
-	stln.React(func(event OrderCompleted) error {
+	mux.React(func(event OrderCompleted) error {
+		fmt.Println("Got OrderCompleted event:", event.OrderID)
 		return nil
 	})
 
-	rb.Dispatch("order.completed", []byte(`{"order_id":"123"}`))
+	mux.Dispatch("order.completed", []byte(`{"orderId":"123"}`))
+	// Output: Got OrderCompleted event: 123
 }
 
 func TestReflect(t *testing.T) {

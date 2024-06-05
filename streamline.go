@@ -1,9 +1,7 @@
 package streamline
 
 import (
-	"context"
 	"errors"
-	"reflect"
 	"strings"
 
 	"github.com/uudashr/eventually"
@@ -12,58 +10,6 @@ import (
 
 type Event = eventually.Event
 type EventHandler = rebound.EventHandler
-
-type Streamline struct {
-	rb     *rebound.Rebound
-	stream EventStream
-}
-
-func NewStreamline(rb *rebound.Rebound, stream EventStream) (*Streamline, error) {
-	if rb == nil {
-		return nil, errors.New("streamline: nil rb")
-	}
-
-	if stream == nil {
-		return nil, errors.New("streamline: nil stream")
-	}
-
-	return &Streamline{
-		rb:     rb,
-		stream: stream,
-	}, nil
-}
-
-func (stln *Streamline) React(fn EventHandler) {
-	fnt := reflect.TypeOf(fn)
-	inType := fnt.In(0)
-	if inType.Kind() != reflect.Struct {
-		panic("streamline: fn EventHandler argument must be a struct")
-	}
-
-	eventName, ok := TagValue(inType)
-	if !ok {
-		panic("streamline: missing streamline tag")
-	}
-
-	stln.rb.ReactTo(eventName, fn)
-}
-
-func (stln *Streamline) StreamAndReact(ctx context.Context) error {
-	return stln.stream.StreamTo(ctx, ReceiverFunc(stln.rb.Dispatch))
-}
-
-func (stln *Streamline) Publish(ctx context.Context, event Event) error {
-	// Options:
-	// 1. Publish to a message service
-	// 2. Process in-memory
-	// 3. Persist to a database (outbox table)
-	return stln.stream.Publish(ctx, event)
-}
-
-type EventStream interface {
-	Publish(context.Context, Event) error
-	StreamTo(context.Context, Receiver) error
-}
 
 type Receiver interface {
 	Receive(eventName string, payload []byte) error
