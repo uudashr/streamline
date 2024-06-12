@@ -10,6 +10,8 @@ github.com/uudashr/eventually v1.0.0 h1:3fLc2Q9iVwEvnkMmF8dLGR5CB8SuRBdLvz7enmpN
 github.com/uudashr/eventually v1.0.0/go.mod h1:EorTAUsVBlB5h0QT99fK52JHNbXl+DV9yIKVEMotHic=
 github.com/uudashr/rebound v1.0.0 h1:tRuAEu7Kg7MXQTX5ms+ZWFPEsv6It0g4NYs8CoVaT0w=
 github.com/uudashr/rebound v1.0.0/go.mod h1:7GVTIXmxM3FgQcNzmmRIY+4DiMLCqDm8+IJ8blbvjAI=
+github.com/uudashr/rebound v1.0.1 h1:0rnIKHr10nvzXOGJsK53JvGlWIglaTSsqvpHEj76mXo=
+github.com/uudashr/rebound v1.0.1/go.mod h1:7GVTIXmxM3FgQcNzmmRIY+4DiMLCqDm8+IJ8blbvjAI=
 golang.org/x/crypto v0.24.0 h1:mnl8DM0o513X8fdIkmyFE/5hTYxbwYOjDS/+rK6qpRI=
 golang.org/x/crypto v0.24.0/go.mod h1:Z1PMYSOR5nyMcyAVAIQSKCDwalqy85Aqn1x3Ws4L5DM=
 golang.org/x/sys v0.21.0 h1:rF+pYz3DAGSQAxAu1CbC7catZg4ebC4UIeIhKxBZvws=

@@ -5,7 +5,7 @@ go 1.22.0
 require (
 	github.com/nats-io/nats.go v1.35.0
 	github.com/uudashr/eventually v1.0.0
-	github.com/uudashr/rebound v1.0.0
+	github.com/uudashr/rebound v1.0.1
 )
 
 require (
