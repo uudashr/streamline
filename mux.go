@@ -1,13 +1,17 @@
 package streamline
 
 import (
+	"errors"
 	"reflect"
 
 	"github.com/uudashr/rebound"
 )
 
+type NoHandlerError = rebound.NoHandlerError
+
 type Mux struct {
-	rb *rebound.Rebound
+	rb              *rebound.Rebound
+	IgnoreNoHandler bool
 }
 
 func NewMux() *Mux {
@@ -32,5 +36,11 @@ func (m *Mux) React(fn EventHandler) {
 }
 
 func (m *Mux) Dispatch(name string, payload []byte) error {
-	return m.rb.Dispatch(name, payload)
+	err := m.rb.Dispatch(name, payload)
+	var noHandlerErr NoHandlerError
+	if m.IgnoreNoHandler && errors.As(err, &noHandlerErr) {
+		return nil
+	}
+
+	return err
 }
