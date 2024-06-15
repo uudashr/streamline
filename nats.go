@@ -61,13 +61,18 @@ func (es *NatsEventStream) Publish(ctx context.Context, event Event) error {
 		return err
 	}
 
-	// TODO: doesn't have to be json
 	payload, err := json.Marshal(event)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	_, err = es.js.Publish(subject, payload)
+	header := make(nats.Header)
+	header.Set("Content-Type", "application/json")
+	_, err = es.js.PublishMsg(&nats.Msg{
+		Subject: subject,
+		Data:    payload,
+		Header:  header,
+	})
 	if err != nil {
 		return err
 	}
