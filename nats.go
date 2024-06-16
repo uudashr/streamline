@@ -13,13 +13,13 @@ import (
 
 const defaultQueueGroupName = "streamline"
 
-type NatsEventStream struct {
+type NATSEventStream struct {
 	js            nats.JetStream
 	subjectPrefix string
 	opts          *streamOpts
 }
 
-func NewNatsEventStream(js nats.JetStream, subjectPrefix string, opts ...StreamOpt) (*NatsEventStream, error) {
+func NewNATSEventStream(js nats.JetStream, subjectPrefix string, opts ...StreamOpt) (*NATSEventStream, error) {
 	if js == nil {
 		return nil, errors.New("streamline: nil js")
 	}
@@ -80,7 +80,7 @@ func (es *NatsEventStream) Publish(ctx context.Context, event Event) error {
 	return nil
 }
 
-func (es *NatsEventStream) StreamTo(ctx context.Context, recv Receiver) error {
+func (es *NATSEventStream) StreamTo(ctx context.Context, recv Receiver) error {
 	queueGroupName := defaultQueueGroupName
 	if es.opts.queueGroupName != "" {
 		queueGroupName = es.opts.queueGroupName
