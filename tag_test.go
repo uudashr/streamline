@@ -44,3 +44,26 @@ func TestTagFieldValue(t *testing.T) {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }
+
+func TestTag(t *testing.T) {
+	type OrderCompleted struct {
+		OrderID string `streamline:"order.completed"`
+	}
+
+	event := OrderCompleted{
+		OrderID: "order-123",
+	}
+
+	tag, val, ok := streamline.Tag(event)
+	if !ok {
+		t.Error("expected ok to be true")
+	}
+
+	if got, want := tag, "order.completed"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+
+	if got, want := val, "order-123"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
