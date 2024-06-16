@@ -12,16 +12,19 @@ type eventRecord struct {
 	payload []byte
 }
 
+// InMemoryEventStream is an event stream that uses in-memory channel as the underlying transport.
 type InMemoryEventStream struct {
 	events chan eventRecord
 }
 
+// NewInMemoryEventStream creates a new in-memory event stream.
 func NewInMemoryEventStream() *InMemoryEventStream {
 	return &InMemoryEventStream{
 		events: make(chan eventRecord, 100),
 	}
 }
 
+// Publish the event to the in-memory channel.
 func (es *InMemoryEventStream) Publish(ctx context.Context, event Event) error {
 	eventType := reflect.TypeOf(event)
 	eventName, ok := TagValue(eventType)
@@ -42,6 +45,7 @@ func (es *InMemoryEventStream) Publish(ctx context.Context, event Event) error {
 	return nil
 }
 
+// StreamTo streams the event from the in-memory channel to the receiver.
 func (es *InMemoryEventStream) StreamTo(ctx context.Context, recv Receiver) error {
 	for {
 		select {

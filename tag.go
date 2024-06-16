@@ -8,6 +8,7 @@ const (
 	tagName = "streamline"
 )
 
+// TagValue returns the value of the streamline tag from the struct type.
 func TagValue(inType reflect.Type) (value string, ok bool) {
 	for i := 0; i < inType.NumField(); i++ {
 		val := inType.Field(i).Tag.Get(tagName)
@@ -19,11 +20,24 @@ func TagValue(inType reflect.Type) (value string, ok bool) {
 	return "", false
 }
 
+// TagFieldValue returns the value of the tag from the event.
 func TagFieldValue(event Event) (value string, ok bool) {
 	_, val, ok := Tag(event)
 	return val, ok
 }
 
+// Tag returns the tag and the value of the tag from the event.
+//
+// Example:
+//
+//	type OrderCompleted struct {
+//	  OrderID string `streamline:"order.completed"`
+//	}
+//
+// Output:
+//   - tag: "order.completed"
+//   - value: "order-123"
+//   - ok: true
 func Tag(event Event) (tag string, value string, ok bool) {
 	eventVal := reflect.ValueOf(event)
 	for i := 0; i < eventVal.NumField(); i++ {

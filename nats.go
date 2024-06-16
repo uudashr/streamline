@@ -11,14 +11,21 @@ import (
 	"github.com/nats-io/nats.go"
 )
 
-const defaultQueueGroupName = "streamline"
+// DefaultQueueGroupName is the default queue group name.
+const DefaultQueueGroupName = "streamline"
 
+// NATSEventStream is an event stream that uses NATS JetStream as the underlying transport.
 type NATSEventStream struct {
 	js            nats.JetStream
 	subjectPrefix string
 	opts          *streamOpts
 }
 
+// NewNATSEventStream creates a new NATS event stream.
+//
+// The subject prefix is used to prefix the event subject.
+//
+// Example: `sales` as the prefix will result in the subject format of `sales.<aggregate-name>.<aggregate-id>.<event-name>`.
 func NewNATSEventStream(js nats.JetStream, subjectPrefix string, opts ...StreamOpt) (*NATSEventStream, error) {
 	if js == nil {
 		return nil, errors.New("streamline: nil js")
@@ -33,14 +40,15 @@ func NewNATSEventStream(js nats.JetStream, subjectPrefix string, opts ...StreamO
 		opt.configureStream(strmOpts)
 	}
 
-	return &NatsEventStream{
+	return &NATSEventStream{
 		js:            js,
 		subjectPrefix: subjectPrefix,
 		opts:          strmOpts,
 	}, nil
 }
 
-func (es *NatsEventStream) Publish(ctx context.Context, event Event) error {
+// Publish the event to the NATS JetStream.
+func (es *NATSEventStream) Publish(ctx context.Context, event Event) error {
 	eventType := reflect.TypeOf(event)
 	eventName, ok := TagValue(eventType)
 	if !ok {
@@ -80,8 +88,9 @@ func (es *NatsEventStream) Publish(ctx context.Context, event Event) error {
 	return nil
 }
 
+// StreamTo streams the event from the NATS JetStream to the recv.
 func (es *NATSEventStream) StreamTo(ctx context.Context, recv Receiver) error {
-	queueGroupName := defaultQueueGroupName
+	queueGroupName := DefaultQueueGroupName
 	if es.opts.queueGroupName != "" {
 		queueGroupName = es.opts.queueGroupName
 	}
@@ -156,6 +165,8 @@ type streamOpts struct {
 	queueGroupName string
 	durableName    string
 }
+
+// StreamOpt is an option to configure the NATS event stream.
 type StreamOpt interface {
 	configureStream(*streamOpts)
 }
@@ -166,12 +177,14 @@ func (f streamOptFunc) configureStream(opts *streamOpts) {
 	f(opts)
 }
 
+// QueueGroup sets the queue group name.
 func QueueGroup(name string) StreamOpt {
 	return streamOptFunc(func(opts *streamOpts) {
 		opts.queueGroupName = name
 	})
 }
 
+// Durable sets the durable name.
 func Durable(name string) StreamOpt {
 	return streamOptFunc(func(opts *streamOpts) {
 		opts.durableName = name
