@@ -28,6 +28,7 @@ func NewMux() *Mux {
 // React to an event which defined by the fn handler.
 func (m *Mux) React(fn EventHandler) {
 	fnt := reflect.TypeOf(fn)
+
 	inType := fnt.In(0)
 	if inType.Kind() != reflect.Struct {
 		panic("streamline: fn EventHandler argument must be a struct")
@@ -44,6 +45,7 @@ func (m *Mux) React(fn EventHandler) {
 // Dispatch the event payload.
 func (m *Mux) Dispatch(name string, payload []byte) error {
 	err := m.rb.Dispatch(name, payload)
+
 	var noHandlerErr NoHandlerError
 	if m.IgnoreNoHandler && errors.As(err, &noHandlerErr) {
 		return nil

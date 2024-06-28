@@ -10,7 +10,7 @@ const (
 
 // TagValue returns the value of the streamline tag from the struct type.
 func TagValue(inType reflect.Type) (value string, ok bool) {
-	for i := 0; i < inType.NumField(); i++ {
+	for i := range inType.NumField() {
 		val := inType.Field(i).Tag.Get(tagName)
 		if val != "" {
 			return val, true
@@ -23,6 +23,7 @@ func TagValue(inType reflect.Type) (value string, ok bool) {
 // TagFieldValue returns the value of the tag from the event.
 func TagFieldValue(event Event) (value string, ok bool) {
 	_, val, ok := Tag(event)
+
 	return val, ok
 }
 
@@ -40,7 +41,7 @@ func TagFieldValue(event Event) (value string, ok bool) {
 //   - ok: true
 func Tag(event Event) (tag string, value string, ok bool) {
 	eventVal := reflect.ValueOf(event)
-	for i := 0; i < eventVal.NumField(); i++ {
+	for i := range eventVal.NumField() {
 		tag, ok := eventVal.Type().Field(i).Tag.Lookup(tagName)
 		if ok {
 			return tag, eventVal.Field(i).String(), true

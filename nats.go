@@ -25,7 +25,9 @@ type NATSEventStream struct {
 //
 // The subject prefix is used to prefix the event subject.
 //
-// Example: `sales` as the prefix will result in the subject format of `sales.<aggregate-name>.<aggregate-id>.<event-name>`.
+// Example:
+//
+//	`sales` as the prefix will result in the subject format of `sales.<aggregate-name>.<aggregate-id>.<event-name>`.
 func NewNATSEventStream(js nats.JetStream, subjectPrefix string, opts ...StreamOpt) (*NATSEventStream, error) {
 	if js == nil {
 		return nil, errors.New("streamline: nil js")
@@ -48,8 +50,9 @@ func NewNATSEventStream(js nats.JetStream, subjectPrefix string, opts ...StreamO
 }
 
 // Publish the event to the NATS JetStream.
-func (es *NATSEventStream) Publish(ctx context.Context, event Event) error {
+func (es *NATSEventStream) Publish(_ context.Context, event Event) error {
 	eventType := reflect.TypeOf(event)
+
 	eventName, ok := TagValue(eventType)
 	if !ok {
 		return errors.New("streamline: missing streamline tag")
@@ -76,6 +79,7 @@ func (es *NATSEventStream) Publish(ctx context.Context, event Event) error {
 
 	header := make(nats.Header)
 	header.Set("Content-Type", "application/json")
+
 	_, err = es.js.PublishMsg(&nats.Msg{
 		Subject: subject,
 		Data:    payload,
@@ -101,6 +105,7 @@ func (es *NATSEventStream) StreamTo(ctx context.Context, recv Receiver) error {
 	}
 
 	msgCh := make(chan *nats.Msg, 100)
+
 	_, err := es.js.ChanQueueSubscribe(
 		es.subjectPrefix+".>", queueGroupName,
 		msgCh,

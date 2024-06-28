@@ -25,14 +25,15 @@ func NewInMemoryEventStream() *InMemoryEventStream {
 }
 
 // Publish the event to the in-memory channel.
-func (es *InMemoryEventStream) Publish(ctx context.Context, event Event) error {
+func (es *InMemoryEventStream) Publish(_ context.Context, event Event) error {
 	eventType := reflect.TypeOf(event)
+
 	eventName, ok := TagValue(eventType)
 	if !ok {
 		return errors.New("streamline: missing streamline tag")
 	}
 
-	// TODO: doesn't have to be json
+	// TODO uudashr: doesn't have to be json
 	payload, err := json.Marshal(event)
 	if err != nil {
 		panic(err)
@@ -42,6 +43,7 @@ func (es *InMemoryEventStream) Publish(ctx context.Context, event Event) error {
 		name:    eventName,
 		payload: payload,
 	}
+
 	return nil
 }
 
